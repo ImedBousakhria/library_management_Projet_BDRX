@@ -1,0 +1,44 @@
+--  nombre d’employés par département. 2 méthodes
+    -- 1
+    select department_name, count(*) as nbr_emp_par_dep from employees e, departments d where e.department_id = d.department_id group by department_name;
+    -- 2
+    select department_name, count(*) as nbr_emp_par_dep from employees e Join departments d on e.department_id = d.department_id group by department_name;
+
+
+-- noms des departemets ayant +30000 euros pour total des salaires de ses employées
+    -- 1
+    select department_name, sum(salary) as sum_salary from departments d, employees e where d.department_id = e.department_id group by department_name having sum_salary > 30000.00;
+    -- 2
+    select department_name, sum(salary) as sum_salary from departments d join employees e on d.department_id = e.department_id group by department_name having sum_salary > 30000.00;
+ 
+
+-- les informations de l’employé qui gagne le moins.
+select * from employees where salary = (select min(salary) from employees);
+
+
+-- les infos relatifs aux employés en détails
+select e.first_name, e.last_name, j.job_title, d.department_name, e2.first_name as manager_first_name from employees e join jobs j on j.job_id = e.job_id join departments d on d.department_id = e.department_id left join employees e2 on e.manager_id = e2.employee_id;
+
+-- max salaire par departement trié par order décroissant (pour ceux qui ont +10000) 
+select department_name, max(salary) from departments d, employees e where d.department_id = e.department_id and e.salary > 10000 group by department_name order by max(salary) desc;
+
+-- le nombre de pays dans lesquels il y a au moins un département sans doublon
+SELECT COUNT(DISTINCT c.country_name) FROM departments d JOIN locations l ON l.location_id = d.location_id JOIN countries c ON c.country_id = l.country_id;
+
+--  le nom du pays et celui de la région sans doublon pour tous les pays qui ont au moins un département.
+SELECT DISTINCT c.country_name, r.region_name FROM departments d JOIN locations l ON l.location_id = d.location_id JOIN countries c ON c.country_id = l.country_id join regions r on r.region_id = c.region_id;
+
+-- salaire moyen dans cette entreprise 
+select avg(salary) from employees;
+
+-- le salaire moyen par catégorie d’emploi en ne considérant que les types d’emploi de la catégorie « manager » et trié du plus petit au plus grand salaire moyen
+SELECT e.job_id, AVG(e.salary) AS salaire_moyen FROM employees e WHERE e.job_id IN ( SELECT j.job_id FROM jobs j WHERE j.job_title LIKE '%Manager%' ) GROUP BY e.job_id ORDER BY salaire_moyen ASC;
+
+-- tous les employés qui sont liés à « dependents »
+SELECT DISTINCT e.* FROM employees e JOIN dependents d ON e.employee_id = d.employee_id;
+
+-- tous les employés qui ne sont pas liés à « dependents »
+SELECT DISTINCT e.* FROM employees e where not exists (select * from dependents d where d.employee_id = e.employee_id);
+
+-- salaires net et brut pour chaque employé
+SELECT employee_id, first_name, last_name, salary AS salaire_brut, salary * 0.75 AS salaire_net FROM employees;
