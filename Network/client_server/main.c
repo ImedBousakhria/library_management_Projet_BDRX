@@ -54,7 +54,7 @@ int main() {
 
     // Send introduction message
     char request[256];
-    sprintf(request, "Hey server, it's me %d", memberID);
+    sprintf(request, "%d", memberID);
     send(sock, request, strlen(request), 0);
     printf("Client: %s\n", request);
 
@@ -71,7 +71,7 @@ int main() {
     scanf("%d", &objectID);  // Get object ID from user input
 
     // Send object ID for borrowing
-    sprintf(request, "It's %d", objectID);
+    sprintf(request, "%d", objectID);
     send(sock, request, strlen(request), 0);
     printf("Client: %s\n", request);
 
