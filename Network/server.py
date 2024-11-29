@@ -1,5 +1,5 @@
 import socket
-from Network.db_connection import get_db
+from db_connection import get_db
 from datetime import date
 
 db = get_db()
@@ -18,7 +18,7 @@ try:
             data = conn.recv(1024)
             data = data.decode()
 
-            if "Hey server, it's me" in data:
+            if data:
                 member_id = int(data.split()[-1])  
                 print(f"Received member ID: {member_id}")
 
@@ -35,7 +35,7 @@ try:
                 data = conn.recv(1024)
                 data = data.decode()
 
-                if "It's" in data:
+                if data:
                     object_id = int(data.split()[-1]) 
                     print(f"Received object ID: {object_id}")
 
