@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1732838650 source:c:\users\lenovo\desktop\client_server\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<winsock2.h>
+	<ws2tcpip.h>
+
