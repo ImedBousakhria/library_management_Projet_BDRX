@@ -1,5 +1,5 @@
 import socket
-from db_connection import get_db
+from Network.db_connection import get_db
 from datetime import date
 
 db = get_db()
