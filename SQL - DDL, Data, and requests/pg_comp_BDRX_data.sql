@@ -99,9 +99,9 @@ INSERT INTO Auteur (nom, prenom, nationalite) VALUES
 ('Moreau', 'Claire', 'Francaise');
 
 -- Additional Livre
-INSERT INTO Livre (id_livre, id_auteur, editeur, nombre_page, collection, edition) VALUES
-(5, 3, 'Springer', 350, 'Data Insights', '1st Edition'),
-(6, 4, 'Hachette', 420, 'Chemical Knowledge', '4th Edition');
+INSERT INTO Livre (id_livre, editeur, nombre_page, collection, edition) VALUES
+(5, 'Springer', 350, 'Data Insights', '1st Edition'),
+(6, 'Hachette', 420, 'Chemical Knowledge', '4th Edition');
 
 -- Additional Ecrire
 INSERT INTO Ecrire (id_auteur, id_livre) VALUES
