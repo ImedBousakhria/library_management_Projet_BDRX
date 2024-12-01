@@ -31,6 +31,17 @@ JOIN  livre l ON ex.id_exemplaire = l.id_livre
 JOIN elements el ON el.id_element = l.id_livre
 WHERE el.titre like '?' 
 AND e.date_retour is not NULL;
+
+
+-- if student or teacher member_type = the select = 0  ? 'is_teacher' : 'is_student'
+
+SELECT count(*) from membre m join Etudiant e ON m.id_membre = e.id_etudiant ;
+
+-- quota student how many items did  depends on the membre type 
+SELECT count(*) from emprunt where id_membre= ? and date_retour is null; -- QUOTA-TEACHER
+
+
+
 -- 9: Insert after emprunt done
 -- 10: Retour update date_retour
 -- 4 Count the number of books written by each author
@@ -38,3 +49,7 @@ AND e.date_retour is not NULL;
 -- 6 List students in a specific formation and level
 -- 7 Calculate the average price of items purchased
 -- 8 Find all elements published in a specific language and genre
+
+
+
+-- borrow on top of borrow (I borrowed 1 and gave Feryel 1 to reborrow) stupid 

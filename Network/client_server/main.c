@@ -12,17 +12,18 @@ int main() {
     WSADATA wsa;
     SOCKET sock = INVALID_SOCKET;
     struct sockaddr_in serv_addr;
-    int memberID;  // Dynamically input member ID
-    int objectID;  // Dynamically input object ID
     char buffer[1024] = {0};
+    char request[256];
+    int memberID, objectID;
+    char choice[10]; // To decide if the client wants to continue borrowing
 
     // Initialize Winsock
-    if (WSAStartup(MAKEWORD(2,2), &wsa) != 0) {
-        printf("Failed. Error Code : %d\n", WSAGetLastError());
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        printf("Failed. Error Code: %d\n", WSAGetLastError());
         return 1;
     }
 
-    // Socket creation
+    // Create socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) {
         printf("Socket creation failed. Error: %d\n", WSAGetLastError());
         WSACleanup();
@@ -32,9 +33,9 @@ int main() {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
 
-    // Use loopback IP address to connect to server on the same machine
+    // Use loopback IP address (127.0.0.1) for local testing
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
-        printf("Invalid IP address\n");
+        printf("Invalid IP address.\n");
         closesocket(sock);
         WSACleanup();
         return 1;
@@ -48,40 +49,61 @@ int main() {
         return 1;
     }
 
-    // Prompt the user to input member ID
+    // Input and send member ID
     printf("Enter your member ID: ");
-    scanf("%d", &memberID);  // Get member ID from user input
-
-    // Send introduction message
-    char request[256];
+    scanf("%d", &memberID);
     sprintf(request, "%d", memberID);
     send(sock, request, strlen(request), 0);
-    printf("Client: %s\n", request);
 
-    // Receive server's response
-    int valread = recv(sock, buffer, 1024, 0);
-    if (valread > 0) {
+    // Receive server response
+    if (recv(sock, buffer, sizeof(buffer), 0) > 0) {
+        // Clear out any potential leftover characters
+        buffer[strcspn(buffer, "\r\n")] = '\0'; // Remove any extra newline or carriage return
+
         printf("Server: %s\n", buffer);
-    } else {
-        printf("Failed to receive response. Error: %d\n", WSAGetLastError());
+        if (strcmp(buffer, "Invalid member ID. Please try again.") == 0) {
+            closesocket(sock);
+            WSACleanup();
+            return 0;
+        }
     }
 
-    // Prompt the user to input object ID
-    printf("Enter the object ID you want to borrow: ");
-    scanf("%d", &objectID);  // Get object ID from user input
+    // Borrowing objects loop
+    do {
+        // Receive and display the borrow count status
+        if (recv(sock, buffer, sizeof(buffer), 0) > 0) {
+            // Clear out any potential leftover characters
+            buffer[strcspn(buffer, "\r\n")] = '\0'; // Remove any extra newline or carriage return
 
-    // Send object ID for borrowing
-    sprintf(request, "%d", objectID);
-    send(sock, request, strlen(request), 0);
-    printf("Client: %s\n", request);
+            printf("Server: %s\n", buffer);
+            if (strcmp(buffer, "you have 0 borrows left") == 0) {
+                printf("No borrows left, exiting...\n");
+                break;  // Exit if no borrows left
+            }
+        }
 
-    // Receive server's response
-    valread = recv(sock, buffer, 1024, 0);
-    if (valread > 0) {
-        printf("Server: %s\n", buffer);
-    } else {
-        printf("Failed to receive response. Error: %d\n", WSAGetLastError());
-    }
+        // Ask for object ID if the user can still borrow
+        printf("Enter the object ID you want to borrow: ");
+        scanf("%d", &objectID);
+        sprintf(request, "%d", objectID);
+        send(sock, request, strlen(request), 0);
+
+        // Receive server response for the object borrowing status
+        if (recv(sock, buffer, sizeof(buffer), 0) > 0) {
+            // Clear out any potential leftover characters
+            buffer[strcspn(buffer, "\r\n")] = '\0'; // Remove any extra newline or carriage return
+
+            printf("Server borrow response: %s\n", buffer);
+        }
+
+        // Ask if the client wants to continue borrowing
+        printf("Do you want to borrow another object? (yes/no): ");
+        scanf("%s", choice);
+        send(sock, choice, strlen(choice), 0);
+
+    } while (strcmp(choice, "yes") == 0);
+
+    printf("Ending session. Goodbye!\n");
 
     // Cleanup
     closesocket(sock);
