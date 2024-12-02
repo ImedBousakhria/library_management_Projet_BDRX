@@ -14,7 +14,7 @@ def get_db():
 
     try:
         conn=psycopg2.connect(**conn_params)
-        print("the connection was successful !!!!!!")
+        print("Database connection is established !!!")
         return conn
     except psycopg2.Error as e:
         print(f"Error in the connection : {e}")

@@ -1,0 +1,9 @@
+Connected to server at 127.0.0.1:1
+Sending member ID: 4
+Sent 1 bytes
+Received: Welcome Morel Jacques
+Received: You have 2 borrows left
+Sending object ID: 10
+Sent 2 bytes
+Server borrow response: 'Borrowing success!'
+Ending session. Goodbye!

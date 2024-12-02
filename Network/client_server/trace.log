@@ -1,0 +1,2 @@
+Log: Unexpected server response: Member ID check passed without expected confirmation.
+Log: Connection timed out or error during borrow count retrieval.

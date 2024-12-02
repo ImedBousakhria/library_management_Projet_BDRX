@@ -89,11 +89,12 @@ CREATE TABLE IF NOT EXISTS Exemplaire (
 );
 
 CREATE TABLE IF NOT EXISTS Emprunt (
+    id_emprunt SERIAL,
     id_membre INT NOT NULL,
-    id_objet INT NOT NULL,
+    id_exemplaire INT NOT NULL,
     date_emprunt DATE NOT NULL CHECK (date_emprunt <= CURRENT_DATE),
     date_retour DATE,
-    Primary Key (id_membre, id_objet),
+    Primary Key (id_membre, id_exemplaire, id_emprunt),
     Foreign Key (id_membre) references Membre(id_membre),
-    Foreign Key (id_objet) references Exemplaire(id_exemplaire)
+    Foreign Key (id_exemplaire) references Exemplaire(id_exemplaire)
 );

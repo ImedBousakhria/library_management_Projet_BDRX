@@ -121,7 +121,7 @@ INSERT INTO Exemplaire (id_fournisseur, id_element, date_achat, localisation, pr
 (5, 8, '2024-08-25', 'Section Documentary', 28.75);
 
 -- Expanded Emprunt
-INSERT INTO Emprunt (id_membre, id_objet, date_emprunt, date_retour) VALUES
+INSERT INTO Emprunt (id_membre, id_exemeplaire, date_emprunt, date_retour) VALUES
 (3, 5, '2024-11-15', NULL),
 (4, 6, '2024-11-16', '2024-11-18'),
 (5, 7, '2024-11-17', NULL),

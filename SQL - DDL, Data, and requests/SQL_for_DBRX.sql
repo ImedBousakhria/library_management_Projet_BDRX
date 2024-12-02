@@ -2,7 +2,7 @@
 -- ex: books empruntés par Paul
 
 SELECT l.* FROM exemplaire ex
-JOIN emprunt e ON e.id_objet = ex.id_exemplaire
+JOIN emprunt e ON e.id_exemplaire = ex.id_exemplaire
 JOIN livre l ON ex.id_element = l.id_livre
 JOIN membre m ON e.id_membre = m.id_membre
 WHERE m.prenom = '?';
@@ -10,14 +10,14 @@ WHERE m.prenom = '?';
 
 -- available books (general case: objects available)
 SELECT  distinct l.* FROM  exemplaire ex
-JOIN emprunt e ON ex.id_exemplaire = e.id_objet
+JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
 JOIN  livre l ON ex.id_exemplaire = l.id_livre
 WHERE e.date_retour is NOT NULL;
 
 
 SELECT l.*, count(l.*) as book_count
 FROM  exemplaire ex
-JOIN emprunt e ON ex.id_exemplaire = e.id_objet
+JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
 JOIN  livre l ON ex.id_exemplaire = l.id_livre
 WHERE e.date_retour is NOT NULL
 GROUP BY l.id_livre 
@@ -26,7 +26,7 @@ GROUP BY l.id_livre
 -- checks if a specific book is available (search)
 SELECT el.titre 
 FROM  exemplaire ex
-JOIN emprunt e ON ex.id_exemplaire = e.id_objet
+JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
 JOIN  livre l ON ex.id_exemplaire = l.id_livre
 JOIN elements el ON el.id_element = l.id_livre
 WHERE el.titre like '?' 
@@ -52,4 +52,3 @@ SELECT count(*) from emprunt where id_membre= ? and date_retour is null; -- QUOT
 
 
 
--- borrow on top of borrow (I borrowed 1 and gave Feryel 1 to reborrow) stupid 
