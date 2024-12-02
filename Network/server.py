@@ -4,32 +4,31 @@ from datetime import date
 import errno
 import logging
 
-# Set up logging
+
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
-# Timeout constant
 TIMEOUT = 15
-HOST = '0.0.0.0'  # Server will listen on all available interfaces
-PORT = 8080  # Initial port number to start with
+HOST = '0.0.0.0'  
+PORT = 8080  # default port 
 
 def recv_with_timeout(conn, buffer_size=1024):
     """Utility function to receive data with timeout handling."""
     try:
         data = ''
         while True:
-            part = conn.recv(buffer_size).decode()  # Receive a chunk of data
-            data += part  # Append the chunk to the complete data
-            logging.debug(f"Received part: {part}")  # Debug trace
+            part = conn.recv(buffer_size).decode()  
+            data += part  
+            logging.debug(f"Received part: {part}")  
             
             # If we receive the full message (ending with newline or similar)
             if part.endswith('\n') or part.strip():
-                break  # Break the loop when we have received complete data
+                break  
 
             # If no data received, exit to avoid infinite loop
             if not part:
                 break
 
-        logging.debug(f"Full data received: {data.strip()}")  # Debug trace
+        logging.debug(f"Full data received: {data.strip()}") 
         return data.strip()
     except socket.timeout:
         conn.sendall(f"Timeout: No response received within {TIMEOUT} seconds. Goodbye.\n".encode())
@@ -45,48 +44,46 @@ def find_available_port(start_port):
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.settimeout(TIMEOUT)
                 s.bind((HOST, port))
-                logging.info(f"Successfully bound to port {port}.")  # Debug trace
+                logging.info(f"Successfully bound to port {port}.")  
                 return port
         except OSError as e:
             if e.errno == errno.EADDRINUSE:
-                logging.warning(f"Port {port} is already in use. Trying next port...")  # Debug trace
+                logging.warning(f"Port {port} is already in use. Trying next port...")  
                 port += 1  # Try the next port
             else:
-                raise  # Raise any other unexpected errors
+                raise  
 
 # Initialize database connection
 db = get_db()
 
 chosen_port = find_available_port(PORT)
-logging.info(f"Server running on port {chosen_port}.")  # Debug trace
-
+logging.info(f"Server running on port {chosen_port}.")  
 try:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         try:
-            s.bind((HOST, chosen_port))  # Use the chosen port, not the default PORT
+            s.bind((HOST, chosen_port)) 
         except OSError as e:
             if e.errno == errno.EADDRINUSE:
-                logging.error(f"Port {chosen_port} is already in use. Please use a different port.")  # Debug trace
+                logging.error(f"Port {chosen_port} is already in use. Please use a different port.") 
                 exit()
             else:
                 raise
 
         s.listen()
-        logging.info("Server listening...")  # Debug trace
+        logging.info("Server listening...")  
 
-        # Wait for a client to connect
         conn, addr = s.accept()
         with conn:
-            logging.info(f"Connected by {addr}")  # Debug trace
+            logging.info(f"Connected by {addr}") 
             conn.settimeout(TIMEOUT)
             cursor = db.cursor()
 
             try:
-                # Step 1: Receive and verify member ID
+                # Receive and verify member ID
                 data = recv_with_timeout(conn)
                 if data.isdigit():
                     member_id = int(data)
-                    logging.debug(f"Received member ID: {member_id}")  # Debug trace
+                    logging.debug(f"Received member ID: {member_id}")  
 
                     # Check if the member exists
                     cursor.execute("SELECT COUNT(*) FROM membre WHERE id_membre = %s", (member_id,))
@@ -116,7 +113,7 @@ try:
                     conn.sendall(f"You have {borrows_left} borrows left\n".encode())
 
                     if borrows_left == 0:
-                        logging.info("Member has reached borrow limit.")  # Debug trace
+                        logging.info("Member has reached borrow limit.")  
                         break
 
                     # Receive object ID
@@ -125,7 +122,7 @@ try:
                         print(data)
                         object_id = int(data)
                         print(object_id)
-                        logging.debug(f"Received object ID: {object_id}")  # Debug trace
+                        logging.debug(f"Received object ID: {object_id}")  
 
                         # Check if object exists
                         cursor.execute(""" 
@@ -154,7 +151,7 @@ try:
                                     db.commit()
                                     conn.sendall("Borrowing success!\n".encode())
                                 except Exception as e:
-                                    logging.error(f"Database error: {e}")  # Debug trace
+                                    logging.error(f"Database error: {e}")  
                                     conn.sendall("Server error: Could not process your request.\n".encode())
                         else:
                             conn.sendall("Invalid object ID. Please try again.\n".encode())
@@ -164,16 +161,16 @@ try:
                     # Ask if the client wants to continue borrowing
                     choice = recv_with_timeout(conn).lower()
                     if choice == "no":
-                        logging.info("Client ended session.")  # Debug trace
+                        logging.info("Client ended session.")  
                         conn.sendall("Goodbye!\n".encode())
                         break
 
             except socket.error as sock_err:
                 if sock_err.errno == 10054:
-                    logging.warning("Client disconnected unexpectedly.")  # Debug trace
+                    logging.warning("Client disconnected unexpectedly.")  
             except Exception as e:
-                logging.error(f"Error processing request: {e}")  # Debug trace
+                logging.error(f"Error processing request: {e}")  
                 conn.sendall("Error processing your request. Please try again.\n".encode())
 
 except Exception as e:
-    logging.error(f"Server error: {e}")  # Debug trace
+    logging.error(f"Server error: {e}")  

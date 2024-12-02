@@ -1,25 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <winsock2.h> // Windows-specific
-#include <ws2tcpip.h> // For inet_pton and other functions
+#include <winsock2.h>
+#include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib") // Link with Winsock library
+#pragma comment(lib, "ws2_32.lib")
 
 #define DEFAULT_PORT 8080 // Default port
 
-// Trim function to remove extra spaces and newline characters
+
 void trim(char *str) {
     char *end;
-
-    // Trim leading spaces and newlines
     while (isspace((unsigned char)*str) || *str == '\n' || *str == '\r') str++;
 
-    // Trim trailing spaces and newlines
     end = str + strlen(str) - 1;
     while (end > str && (isspace((unsigned char)*end) || *end == '\n' || *end == '\r')) end--;
 
-    // Null-terminate the string
+
     *(end + 1) = '\0';
 }
 
@@ -28,11 +25,10 @@ int send_data(SOCKET sock, const char *data) {
     int data_len = strlen(data);
     int sent = 0;
 
-    // Loop to send data in chunks
     while (sent < data_len) {
         int bytes_to_send = data_len - sent;
         if (bytes_to_send > 1024) {
-            bytes_to_send = 1024; // Maximum buffer size
+            bytes_to_send = 1024;
         }
 
         int sent_bytes = send(sock, data + sent, bytes_to_send, 0);
@@ -44,7 +40,7 @@ int send_data(SOCKET sock, const char *data) {
         sent += sent_bytes;
     }
 
-    return 0; // Successful transmission
+    return 0;
 }
 
 int main() {
@@ -53,32 +49,27 @@ int main() {
     struct sockaddr_in serv_addr;
     char buffer[1024] = {0};
     char request[256];
-    long long memberID;  // Changed to long long for larger numbers
+    long long memberID;
     int objectID;
-    char choice[10]; // To decide if the client wants to continue borrowing
+    char choice[10];
     int recv_result;
-    int PORT = DEFAULT_PORT; // Default port value
-    char ip_address[100]; // Buffer for the IP address
+    int PORT = DEFAULT_PORT;
+    char ip_address[100];
 
-    // Ask user for IP address
     printf("Enter the server IP address: ");
     scanf("%s", ip_address);
 
-    // Ask user for port number with a default option
     printf("Enter the server port number (press Enter to use the default: %d): ", DEFAULT_PORT);
 
-    // Clear the input buffer and read the input
-    while (getchar() != '\n'); // Clear any leftover newline characters
+    while (getchar() != '\n');
 
-    fgets(choice, sizeof(choice), stdin); // Use fgets to read the input including empty lines
-    trim(choice); // Remove extra spaces and newline characters
+    fgets(choice, sizeof(choice), stdin);
+    trim(choice);
 
-    // Check if the user pressed "Enter" without entering a port
     if (strlen(choice) == 0) {
         printf("No port entered. Using default port: %d\n", DEFAULT_PORT);
         PORT = DEFAULT_PORT;
     } else {
-        // Convert the input to an integer
         PORT = atoi(choice);
         if (PORT <= 0 || PORT > 65535) {
             printf("Using default port: %d\n", DEFAULT_PORT);
@@ -86,7 +77,6 @@ int main() {
         }
     }
 
-    // Initialize Winsock
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
         printf("Failed. Error Code: %d\n", WSAGetLastError());
         return 1;
@@ -100,7 +90,7 @@ int main() {
     }
 
     // Set timeout for socket operations (5 seconds for sending/receiving)
-    int timeout_ms = 25000; // 5 seconds in milliseconds
+    int timeout_ms = 25000;
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout_ms, sizeof(timeout_ms));
     setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout_ms, sizeof(timeout_ms));
 
@@ -133,15 +123,15 @@ int main() {
     // Input and send member ID
     while (1) {
         printf("Enter your member ID: ");
-        if (scanf("%lld", &memberID) != 1) {  // Changed to %lld for long long
+        if (scanf("%lld", &memberID) != 1) {
             printf("Invalid member ID. Please enter a numeric value.\n");
-            while (getchar() != '\n'); // Clear the input buffer
+            while (getchar() != '\n');
         } else {
             break;
         }
     }
 
-    sprintf(request, "%lld", memberID);  // Changed to %lld for long long
+    sprintf(request, "%lld", memberID);
     if (send_data(sock, request) == -1) {
         closesocket(sock);
         WSACleanup();
@@ -150,19 +140,14 @@ int main() {
     // Receive server response
     recv_result = recv(sock, buffer, sizeof(buffer), 0);
     if (recv_result > 0) {
-        buffer[recv_result] = '\0'; // Null-terminate the received data
-        trim(buffer);  // Trim the received string
+        buffer[recv_result] = '\0';
+        trim(buffer);
         printf("Received: %s\n", buffer);
 
         if (strcmp(buffer, "Invalid member ID. Please try again.") == 0) {
             closesocket(sock);
             WSACleanup();
             return 0;
-//        } else if(strstr("Welcome ", buffer) == NULL){
-//            printf("unexpected response from the server");
-//            closesocket(sock);
-//            WSACleanup();
-//            return 0;
         }
     } else {
         printf("Server closed the connection unexpectedly.\n");
@@ -176,8 +161,8 @@ int main() {
         // Receive and display the borrow count status
         recv_result = recv(sock, buffer, sizeof(buffer), 0);
         if (recv_result > 0) {
-            buffer[recv_result] = '\0'; // Null-terminate the received data
-            trim(buffer);  // Trim the received string
+            buffer[recv_result] = '\0';
+            trim(buffer);
             printf("Received: %s\n", buffer);
 
             if (strcmp(buffer, "You have 0 borrows left") == 0) {
@@ -185,23 +170,17 @@ int main() {
                 closesocket(sock);
                 WSACleanup();
                 return 0;
-//            }else if(strstr("You have borrows left", buffer) == NULL){
-//                printf("unexpected response from the server \n");
-//                closesocket(sock);
-//                WSACleanup();
-//                return 0;
           }
         } else {
             printf("Server closed the connection unexpectedly.\n");
             break;
         }
 
-        // Ask for object ID if the user can still borrow
         while (1) {
             printf("Enter the object ID you want to borrow: ");
             if (scanf("%d", &objectID) != 1) {
                 printf("Invalid object ID. Please enter a numeric value.\n");
-                while (getchar() != '\n'); // Clear the input buffer
+                while (getchar() != '\n');
             } else {
                 break;
             }
@@ -216,8 +195,8 @@ int main() {
         // Receive server response for the object borrowing status
         recv_result = recv(sock, buffer, sizeof(buffer), 0);
         if (recv_result > 0) {
-            buffer[recv_result] = '\0'; // Null-terminate the received data
-            trim(buffer);  // Trim the received string
+            buffer[recv_result] = '\0';
+            trim(buffer);
             printf("Server borrow response: '%s'\n", buffer);
 
         } else {
@@ -242,7 +221,6 @@ int main() {
 
     printf("Ending session. Goodbye!\n");
 
-    // Cleanup
     closesocket(sock);
     WSACleanup();
     return 0;
