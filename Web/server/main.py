@@ -127,7 +127,7 @@ async def get_borrwed(user_id : int):
     JOIN exemplaire ex ON ex.id_exemplaire = e.id_exemplaire
     JOIN elements el ON el.id_element = ex.id_element
     JOIN DVD d ON d.id_DVD= el.id_element
-    where id_membre =1
+    where id_membre = :user_id
     ORDER BY date_emprunt DESC;
     """
     params = {"user_id": user_id}
