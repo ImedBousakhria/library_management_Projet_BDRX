@@ -34,7 +34,7 @@ INSERT INTO Auteur (nom, prenom, nationalite) VALUES
 ('Smith', 'Robert', 'Americaine');
 
 -- Insert into Livre
-INSERT INTO Livre (id_livre, id_auteur, editeur, nombre_page, collection, edition) VALUES
+INSERT INTO Livre (id_livre, editeur, nombre_page, collection, edition) VALUES
 (1, 1, 'Reilly', 300, 'Series A', '3rd Edition'),
 (2, 2, 'Packt', 400, 'Series B', '2nd Edition');
 
@@ -56,7 +56,7 @@ INSERT INTO Exemplaire (id_fournisseur, id_element, date_achat, localisation, pr
 (3, 4, '2024-04-25', 'Section DVD', 19.99);
 
 -- Insert into Emprunt
-INSERT INTO Emprunt (id_membre, id_objet, date_emprunt, date_retour) VALUES
+INSERT INTO Emprunt (id_membre, id_exemeplaire, date_emprunt, date_retour) VALUES
 (3, 1, '2024-11-15', '2024-11-18'),
 (4, 2, '2024-11-16', NULL),
 (3, 3, '2024-11-18', NULL);
