@@ -7,6 +7,8 @@ import Home from './pages/Home';
 import Borrows from './pages/Borrows';
 import PageLayout from './components/Layout/PageLayout';
 import './index.css'
+import LearnMore from './pages/LearnMore';
+import Profile from './pages/Profile';
 
 
 
@@ -16,9 +18,12 @@ const App = () => {
       <Routes>
         <Route exact path="/" element={<PageLayout childPage={<LandingPage />} />}/>
         <Route path="/login" element={<Login />} />
+        <Route path="/more" element={<LearnMore />} />
         <Route path="/home" element={<PageLayout navElements={[{label: 'A'}, {label: 'B'}]} childPage={<Home />} />}>
           <Route path='my-borrows' element={<PageLayout childPage={<Borrows />} />} />
         </Route>
+        <Route path="/profile" element={<PageLayout childPage={<Profile />} />}/>
+
 
       </Routes>
     </BrowserRouter>  )

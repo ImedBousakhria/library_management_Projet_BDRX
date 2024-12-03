@@ -1,7 +1,8 @@
 import React from "react";
 import hero from "../assets/hero.png";
-import { FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { FaSearch } from "react-icons/fa";
+
 
 const LandingPage = () => {
   return (
@@ -11,14 +12,15 @@ const LandingPage = () => {
           What book are you looking for?
         </h2>
         <div className="flex items-center mt-9 px-2 py-2 w-full max-w-sm bg-white rounded-full border-2 border-yellow-950 shadow-[4px_4px_0px_rgba(0,0,0,1)]">
-          <input
-            type="text"
-            placeholder="Type in the book title ..."
-            className="w-full outline-none text-sm text-black placeholder-gray-400"
-          />
-          <FaSearch className="text-gray-500" size={18} />
-        </div>
+          <Link
+            to="/home"
+            className="w-full flex justify-between outline-none text-sm text-black placeholder-gray-400 text-center"
+          >
+            <span className=" font-light text-gray-500">Search for the book of your choice</span>
+            <FaSearch className="text-gray-500" size={18} />
 
+          </Link>
+        </div>
         <h3 className=" text-lg font-frank mt-4 px-3">
           Get all your books in one place
         </h3>
@@ -28,12 +30,13 @@ const LandingPage = () => {
               Let's Go
             </button>
           </Link>
-          <button className=" basis-[50%] hover:border-2 hover:border-yellow-950 border-transparent border px-3 py-2 text-yellow-950 min-w-max transition-all duration-300">
-            Learn more
-          </button>
+          <Link to={"/more"} className="basis-[50%] ">
+            <button className="hover:border-2 hover:border-yellow-950 border-transparent border px-3 py-2 text-yellow-950 min-w-max transition-all duration-300">
+              Learn more
+            </button>
+          </Link>
         </div>
       </div>
-
       <img src={hero} className=" h-96 w-96" alt="" />
     </div>
   );
