@@ -77,7 +77,7 @@ async def get_best_books(
         cover_url = await fetch_book_cover(title, author)
 
         book_with_cover = dict(book)
-        book_with_cover["cover_url"] = cover_url == cover_url if cover_url else URL_COVER_NOT_FOUND
+        book_with_cover["cover_url"] = cover_url  if cover_url else URL_COVER_NOT_FOUND
 
         enriched_books.append(book_with_cover)
 
@@ -193,7 +193,7 @@ async def get_borrwed(user_id : int):
     ORDER BY date_emprunt DESC;
     """
     params = {"user_id": user_id}
-
+    
     results = await database.fetch_all(query, values=params)
     
  
@@ -248,9 +248,7 @@ async def fetch_book_cover(title: str, author: str):
         if "items" in data and len(data["items"]) > 0:
             cover_url = data["items"][0]["volumeInfo"].get("imageLinks", {}).get("thumbnail")
             return cover_url
-        else:
-          return URL_COVER_NOT_FOUND      
-    return URL_COVER_NOT_FOUND
+    return None    
 
 
 #fetching DVD posters 
@@ -266,4 +264,11 @@ async def fetch_DVD_cover(title):
             if poster_path:
                 full_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
                 return full_url   
-    return URL_COVER_NOT_FOUND
+    return None
+
+@app.get("/api/BookCategories")
+async def get_book_categories():
+    query="""select DISTINCT genre from elements"""
+        
+    result = await database.fetch_all(query)
+    return result
