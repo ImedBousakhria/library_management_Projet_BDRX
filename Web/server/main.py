@@ -2,7 +2,8 @@ from fastapi import FastAPI, Query, HTTPException, Body
 from databases import Database
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
-
+from typing import List
+import httpx
 
 DATABASE_URL = "postgresql+asyncpg://postgres:feryel04@localhost:5432/postgres"
 database = Database(DATABASE_URL)
@@ -15,6 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+URL_COVER_NOT_FOUND="https://via.placeholder.com/150x220.png?text=No+Cover+Available"
 
 @app.get("/home")
 async def get_best_books(
@@ -22,11 +24,13 @@ async def get_best_books(
     genre: str = Query(None)
 ):
     # The suggested books (most borrowed) with filters if specified
-    query = """SELECT el.*, l.*, count(*) as book_count 
+    query = """SELECT el.*, l.*, au.nom, au.prenom, count(*) as book_count 
         FROM exemplaire ex 
         JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
         JOIN elements el ON el.id_element = ex.id_element
-        JOIN livre l ON el.id_element = l.id_livre 
+        JOIN livre l ON el.id_element = l.id_livre
+        JOIN ecrire ec ON ec.id_livre = l.id_livre
+        JOIN auteur au ON au.id_auteur = ec.id_auteur
     """
 
     if langue:
@@ -34,7 +38,7 @@ async def get_best_books(
     if genre:
         query += " AND el.genre = :genre "
 
-    query += """group by l.id_livre, el.id_element
+    query += """group by l.id_livre, el.id_element, au.id_auteur
         ORDER BY book_count DESC
         LIMIT 20"""
 
@@ -44,9 +48,21 @@ async def get_best_books(
     if genre:
         params["genre"] = genre
 
-
     results = await database.fetch_all(query, values=params)
-    return {"Books": results}
+
+    enriched_books = []
+    for book in results:
+        title = book["titre"]  
+        author = f"{book['prenom']} {book['nom']}"  
+       
+        cover_url = await fetch_book_cover(title, author)
+
+        book_with_cover = dict(book)
+        book_with_cover["cover_url"] = cover_url == cover_url if cover_url else URL_COVER_NOT_FOUND
+
+        enriched_books.append(book_with_cover)
+
+    return {"Books": enriched_books}
 
 
 @app.get("/home/DVD")
@@ -120,6 +136,7 @@ async def get_borrwed(user_id : int):
  
     return {"books borrowed": results}
 
+
 @app.get("/home/{user_id}/DVD")
 async def get_borrwed(user_id : int):
     #user details 
@@ -141,9 +158,13 @@ async def get_borrwed(user_id : int):
  
     return {"DVDs Borrowed": results}
 
+
+
 class LoginRequest(BaseModel):
     email: str
     password: str 
+
+
 
 @app.post("/login")
 async def login_user(login_data: LoginRequest):
@@ -170,3 +191,18 @@ async def login_user(login_data: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid password")
     
     return {"user_id": result["id_membre"]}
+
+
+
+async def fetch_book_cover(title: str, author: str):
+    api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{title}+inauthor:{author}"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(api_url)
+    print(response)
+    if response.status_code == 200:
+        data = response.json()
+        if "items" in data and len(data["items"]) > 0:
+            cover_url = data["items"][0]["volumeInfo"].get("imageLinks", {}).get("thumbnail")
+            return cover_url
+    return None
