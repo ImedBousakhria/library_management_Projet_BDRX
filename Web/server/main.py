@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from typing import List
 import httpx
 
-DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost:5432/newDB"
+DATABASE_URL = "postgresql+asyncpg://feryel:FeryelBoubeker04%23@postgresql-feryel.alwaysdata.net:5432/feryel_projetbd_rx"
 database = Database(DATABASE_URL)
 
 @asynccontextmanager
@@ -237,7 +237,6 @@ async def fetch_book_cover(title: str, author: str):
             cover_url = data["items"][0]["volumeInfo"].get("imageLinks", {}).get("thumbnail")
             return cover_url
     return None    
-
 
 #fetching DVD posters 
 async def fetch_DVD_cover(title):
