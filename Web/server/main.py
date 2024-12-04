@@ -159,14 +159,13 @@ async def get_user(user_id: int):
     return {"user": results}
 
 
-@app.get("/home/{user_id}/livres")
+@app.get("/home/{user_id}/borrows")
 async def get_borrwed(user_id : int):
     #the books that a spesific user borrowed (returned or not)
     query = """
-        SELECT l.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
+        SELECT el.*, e.date_retour, e.date_emprunt FROM emprunt e 
         JOIN exemplaire ex ON ex.id_exemplaire = e.id_exemplaire
         JOIN elements el ON el.id_element = ex.id_element
-        JOIN Livre l ON l.id_livre= el.id_element
         where id_membre = :user_id
         ORDER BY date_emprunt DESC;
     """
@@ -178,29 +177,7 @@ async def get_borrwed(user_id : int):
     if not results:
         raise HTTPException(status_code=404, detail="User not found")
  
-    return {"books borrowed": results}
-
-
-@app.get("/home/{user_id}/DVD")
-async def get_borrwed(user_id : int):
-    #the DVDs that the user borrowed (returned or not)
-    query = """
-    SELECT d.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
-    JOIN exemplaire ex ON ex.id_exemplaire = e.id_exemplaire
-    JOIN elements el ON el.id_element = ex.id_element
-    JOIN DVD d ON d.id_DVD= el.id_element
-    where id_membre = :user_id
-    ORDER BY date_emprunt DESC;
-    """
-    params = {"user_id": user_id}
-    
-    results = await database.fetch_all(query, values=params)
-    
- 
-    if not results:
-        raise HTTPException(status_code=404, detail="User not found")
- 
-    return {"DVDs Borrowed": results}
+    return {"borrows": results}
 
 
 
