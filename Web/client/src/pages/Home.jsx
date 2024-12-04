@@ -38,6 +38,8 @@ const Home = () => {
 
       const booksData = await bookResponse.json();
       const dvdsData = await dvdResponse.json();
+
+      
       if (booksData && booksData.Books) {
         setBooks(booksData.Books);
         setTotalBooks(booksData.Books.length);
@@ -119,8 +121,19 @@ const Home = () => {
           </div>
         </div>
       </div>
+     
 
       <div className="mt-[10rem] px-20">
+        {/* New Borrow Navigation */}
+      <div className="flex justify-end">
+          <Link
+            to="/borrowed"
+            className="bg-yellow-950 text-white px-6 py-2 rounded-md shadow-lg hover:bg-yellow-800"
+          >
+            Go to Borrowed Items
+          </Link>
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-4 mb-6">
           <button
@@ -183,6 +196,7 @@ const Home = () => {
                     title={book.titre}
                     author={book.author}
                     price={book.price}
+                    image={book.cover_url}
                   />
                 ))}
               {activeTab === "dvds" &&

@@ -1,32 +1,6 @@
 import React from 'react';
 
-const BorrowedItems = () => {
-  const borrowedData = [
-    {
-      id: 1,
-      title: 'The Great Gatsby',
-      type: 'Book',
-      borrowedDate: '2024-11-01',
-      dueDate: '2024-12-01',
-      status: 'Not Returned'
-    },
-    {
-      id: 2,
-      title: 'Inception',
-      type: 'DVD',
-      borrowedDate: '2024-11-05',
-      dueDate: '2024-12-05',
-      status: 'Not Returned'
-    },
-    {
-      id: 3,
-      title: '1984',
-      type: 'Book',
-      borrowedDate: '2024-10-20',
-      dueDate: '2024-11-20',
-      status: 'Returned'
-    },
-  ];
+const BorrowedItems = ({borrowedData}) => {
 
   return (
     <div className="borrowed-items-table">

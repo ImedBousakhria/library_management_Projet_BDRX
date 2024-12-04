@@ -88,7 +88,7 @@ async def get_best_books(
         cover_url = await fetch_book_cover(title, author)
 
         book_with_cover = dict(book)
-        book_with_cover["cover_url"] = cover_url == cover_url if cover_url else URL_COVER_NOT_FOUND
+        book_with_cover["cover_url"] = cover_url if cover_url else URL_COVER_NOT_FOUND
 
         enriched_books.append(book_with_cover)
 
