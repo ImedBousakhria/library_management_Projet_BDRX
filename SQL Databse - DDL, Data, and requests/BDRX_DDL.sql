@@ -20,14 +20,14 @@ CREATE TABLE IF NOT EXISTS Membre (
 );
 
 CREATE TABLE IF NOT EXISTS Etudiant (
-    id_etudiant PRIMARY KEY,
+    id_etudiant INT PRIMARY KEY,
     formation VARCHAR(50) NOT NULL,
     niveau niveau_enum NOT NULL,
     Foreign KEY (id_etudiant) REFERENCES Membre(id_membre)
 );
 
 CREATE TABLE IF NOT EXISTS Enseignant (
-    id_enseignant PRIMARY KEY,
+    id_enseignant INT PRIMARY KEY,
     specialite VARCHAR(100) NOT NULL,
     department VARCHAR(100) NOT NULL,
     Foreign KEY(id_enseignant) REFERENCES Membre(id_membre)
