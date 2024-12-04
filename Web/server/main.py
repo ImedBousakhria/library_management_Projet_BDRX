@@ -16,14 +16,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
+DVD_API_KEY="5e31138282e013cbcde5ae8adb5205b1"
 URL_COVER_NOT_FOUND="https://via.placeholder.com/150x220.png?text=No+Cover+Available"
 
 @app.get("/home")
 async def get_best_books(
     langue: str = Query(None), 
-    genre: str = Query(None)
+    genre: str = Query(None),
+    recherche: str = Query(None)
 ):
-    # The suggested books (most borrowed) with filters if specified
+    # The suggested books (most borrowed from the table emprunt) 
+
     query = """SELECT el.*, l.*, au.nom, au.prenom, count(*) as book_count 
         FROM exemplaire ex 
         JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
@@ -31,25 +35,40 @@ async def get_best_books(
         JOIN livre l ON el.id_element = l.id_livre
         JOIN ecrire ec ON ec.id_livre = l.id_livre
         JOIN auteur au ON au.id_auteur = ec.id_auteur
-    """
-
-    if langue:
-        query += " AND el.langue = :langue "
-    if genre:
-        query += " AND el.genre = :genre "
-
-    query += """group by l.id_livre, el.id_element, au.id_auteur
+        group by l.id_livre, el.id_element, au.id_auteur
         ORDER BY book_count DESC
-        LIMIT 20"""
+        LIMIT 20
+    """
+    # the alternative query is search in all the books with filters if specified 
+    alt_query="""
+       SELECT el.*, l.*, au.nom, au.prenom
+		FROM elements el 
+        JOIN livre l ON el.id_element = l.id_livre
+        JOIN ecrire ec ON ec.id_livre = l.id_livre
+        JOIN auteur au ON au.id_auteur = ec.id_auteur
+    """
+    if langue:
+        alt_query += " AND el.langue = :langue "
+    if genre:
+        alt_query += " AND el.genre = :genre "
+    if recherche:
+        alt_query += " AND el.titre ILIKE :recherche "
+    
 
     params = {}
     if langue:
         params["langue"] = langue
     if genre:
         params["genre"] = genre
+    if recherche:
+        params["recherche"] = f"%{recherche}%"
+
+
+    query = alt_query if langue or genre or recherche else query
 
     results = await database.fetch_all(query, values=params)
 
+    # adding the url for the book cover from a API 
     enriched_books = []
     for book in results:
         title = book["titre"]  
@@ -68,32 +87,57 @@ async def get_best_books(
 @app.get("/home/DVD")
 async def get_best_DVD(
     langue: str = Query(None), 
-    genre: str = Query(None)
+    genre: str = Query(None),
+    recherche: str = Query(None)
 ):
-    # The suggested DVDs (most borrowed) with filters if specified
+    # The suggested DVDs (most borrowed from the table emprunt) 
     query = """SELECT el.*, d.*, count(*) as DVD_count 
         FROM exemplaire ex 
         JOIN emprunt e ON ex.id_exemplaire = e.id_exemplaire
         JOIN elements el ON el.id_element = ex.id_element
         JOIN DVD d ON el.id_element = d.id_DVD 
-    """
-
-    if langue:
-        query += " AND el.langue = :langue "
-    if genre:
-        query += " AND el.genre = :genre "
-
-    query += """group by d.id_DVD, el.id_element
+        group by d.id_DVD, el.id_element
         ORDER BY DVD_count DESC
-        LIMIT 20""" 
+        LIMIT 20
+    """
+    # the alternative query is for searching in all the DVDs with filters if specified
+    alt_query="""
+       SELECT el.*, d.*
+		FROM elements el 
+        JOIN DVD d ON el.id_element = d.id_DVD
+    """
+    if langue:
+        alt_query += " AND el.langue = :langue "
+    if genre:
+        alt_query += " AND el.genre = :genre "
+    if recherche:
+        alt_query += " AND el.titre ILIKE :recherche "
+
+
     params = {}
     if langue:
         params["langue"] = langue
     if genre:
         params["genre"] = genre
-
+    if recherche:
+        params["recherche"] = f"%{recherche}%"
+    
+    query = alt_query if langue or genre or recherche else query
     results = await database.fetch_all(query, values=params)
-    return {"DVDs": results}
+
+    #adding the DVD posters from an API 
+    enriched_DVDs= []
+    for DVD in results:
+        title = DVD["titre"] 
+
+        cover_url = await fetch_DVD_cover(title)
+
+        DVD_with_cover = dict(DVD)
+        DVD_with_cover["cover_url"] = cover_url
+
+        enriched_DVDs.append(DVD_with_cover)
+
+    return {"DVDs": enriched_DVDs}
 
 
 @app.get("/home/{user_id}")
@@ -117,7 +161,7 @@ async def get_user(user_id: int):
 
 @app.get("/home/{user_id}/livres")
 async def get_borrwed(user_id : int):
-    #user details 
+    #the books that a spesific user borrowed (returned or not)
     query = """
         SELECT l.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
         JOIN exemplaire ex ON ex.id_exemplaire = e.id_exemplaire
@@ -139,7 +183,7 @@ async def get_borrwed(user_id : int):
 
 @app.get("/home/{user_id}/DVD")
 async def get_borrwed(user_id : int):
-    #user details 
+    #the DVDs that the user borrowed (returned or not)
     query = """
     SELECT d.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
     JOIN exemplaire ex ON ex.id_exemplaire = e.id_exemplaire
@@ -165,10 +209,10 @@ class LoginRequest(BaseModel):
     password: str 
 
 
-
+#the login endpoint 
 @app.post("/login")
 async def login_user(login_data: LoginRequest):
-    
+    #cheking the email exists in the database
     query = """
     SELECT *
     FROM membre m
@@ -185,24 +229,41 @@ async def login_user(login_data: LoginRequest):
 
     nom_user= result["nom"]
     id_user=result["id_membre"]
-
+    #the password is the name+id 
     expected_password = f"{nom_user}{id_user}"
     if expected_password !=login_data.password :
         raise HTTPException(status_code=401, detail="Invalid password")
     
     return {"user_id": result["id_membre"]}
 
-
-
+ 
+#fetching the books covers
 async def fetch_book_cover(title: str, author: str):
     api_url = f"https://www.googleapis.com/books/v1/volumes?q=intitle:{title}+inauthor:{author}"
     
     async with httpx.AsyncClient() as client:
         response = await client.get(api_url)
-    print(response)
     if response.status_code == 200:
         data = response.json()
         if "items" in data and len(data["items"]) > 0:
             cover_url = data["items"][0]["volumeInfo"].get("imageLinks", {}).get("thumbnail")
             return cover_url
-    return None
+        else:
+          return URL_COVER_NOT_FOUND      
+    return URL_COVER_NOT_FOUND
+
+
+#fetching DVD posters 
+async def fetch_DVD_cover(title):
+    api_url=f"https://api.themoviedb.org/3/search/movie?api_key={DVD_API_KEY}&query={title}"
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(api_url)
+    if response.status_code == 200:
+        data = response.json()
+        if data["results"]:
+            poster_path = data["results"][0]["poster_path"]
+            if poster_path:
+                full_url = f"https://image.tmdb.org/t/p/w500{poster_path}"
+                return full_url   
+    return URL_COVER_NOT_FOUND
