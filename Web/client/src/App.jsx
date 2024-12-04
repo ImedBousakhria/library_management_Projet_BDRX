@@ -9,24 +9,30 @@ import PageLayout from './components/Layout/PageLayout';
 import './index.css'
 import LearnMore from './pages/LearnMore';
 import Profile from './pages/Profile';
+import { AuthProvider } from './utils/AuthContext';
 
 
 
 const App = () => {
   return (
-<BrowserRouter>
-      <Routes>
-        <Route exact path="/" element={<PageLayout childPage={<LandingPage />} />}/>
-        <Route path="/login" element={<Login />} />
-        <Route path="/more" element={<LearnMore />} />
-        <Route path="/home" element={<PageLayout navElements={[{label: 'A'}, {label: 'B'}]} childPage={<Home />} />}>
-          <Route path='my-borrows' element={<PageLayout childPage={<Borrows />} />} />
-        </Route>
-        <Route path="/profile" element={<PageLayout childPage={<Profile />} />}/>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route exact path="/" element={<PageLayout childPage={<LandingPage />} />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/more" element={<LearnMore />} />
+          <Route path="/home" element={<PageLayout navElements={[{ label: 'A' }, { label: 'B' }]} childPage={<Home />} />}>
+            <Route path='borrowed' element={<PageLayout childPage={<Borrows />} />} />
+          </Route>
+          <Route path="/profile" element={<PageLayout childPage={<Profile />} />} />
+          <Route path='/borrowed' element={<PageLayout childPage={<Borrows />} />} />
 
 
-      </Routes>
-    </BrowserRouter>  )
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  )
 }
 
 export default App
