@@ -2,8 +2,9 @@ from fastapi import FastAPI, Query, HTTPException
 from databases import Database
 from contextlib import asynccontextmanager
 
+from fastapi.middleware.cors import CORSMiddleware
 
-DATABASE_URL = "postgresql+asyncpg://postgres:feryel04@localhost:5432/postgres"
+DATABASE_URL = "postgresql+asyncpg://postgres:123456@localhost:5432/newDB"
 database = Database(DATABASE_URL)
 
 @asynccontextmanager
@@ -13,6 +14,15 @@ async def lifespan(app: FastAPI):
     await database.disconnect()
 
 app = FastAPI(lifespan=lifespan)
+
+# Allow CORS for all origins or specific origins
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Specify the frontend origin here
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all HTTP methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 
 @app.get("/home")
@@ -99,7 +109,7 @@ async def get_user(user_id: int):
 
 
 @app.get("/home/{user_id}/livres")
-async def get_borrwed(user_id : int):
+async def get_borrowed_books(user_id : int):
     #user details 
     query = """
         SELECT l.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
@@ -120,7 +130,7 @@ async def get_borrwed(user_id : int):
     return {"books borrowed": results}
 
 @app.get("/home/{user_id}/DVD")
-async def get_borrwed(user_id : int):
+async def get_borrowed_DVDs(user_id : int):
     #user details 
     query = """
     SELECT d.*, el.*, e.date_retour, e.date_emprunt FROM emprunt e 
