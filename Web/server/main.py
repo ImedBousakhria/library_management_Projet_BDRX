@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Body
 from databases import Database
 from contextlib import asynccontextmanager
+from pydantic import BaseModel
 
 
 DATABASE_URL = "postgresql+asyncpg://postgres:feryel04@localhost:5432/postgres"
@@ -139,3 +140,33 @@ async def get_borrwed(user_id : int):
         raise HTTPException(status_code=404, detail="User not found")
  
     return {"DVDs Borrowed": results}
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str 
+
+@app.post("/login")
+async def login_user(login_data: LoginRequest):
+    
+    query = """
+    SELECT *
+    FROM membre m
+    WHERE m.mail = :email
+    """
+    params = {"email": login_data.email}
+
+
+    result = await database.fetch_one(query, values=params)
+
+    if not result:
+        print(f"User with email '{login_data.email}' not found.")
+        raise HTTPException(status_code=404, detail="User not found")
+
+    nom_user= result["nom"]
+    id_user=result["id_membre"]
+
+    expected_password = f"{nom_user}{id_user}"
+    if expected_password !=login_data.password :
+        raise HTTPException(status_code=401, detail="Invalid password")
+    
+    return {"user_id": result["id_membre"]}
