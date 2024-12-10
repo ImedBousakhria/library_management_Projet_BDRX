@@ -3,9 +3,10 @@ from databases import Database
 from contextlib import asynccontextmanager
 
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 import httpx
+from typing import Optional
 
 DATABASE_URL = "postgresql+asyncpg://feryel:FeryelBoubeker04%23@postgresql-feryel.alwaysdata.net:5432/feryel_projetbd_rx"
 database = Database(DATABASE_URL)
@@ -259,3 +260,57 @@ async def get_book_categories():
         
     result = await database.fetch_all(query)
     return result
+
+
+
+# Existing imports and setup...
+
+class UpdateUserRequest(BaseModel):
+    email: Optional[str] = Field(None, description="User's email address")
+    tel: Optional[str] = Field(None, description="User's telephone number")
+    code_postale: Optional[str] = Field(None, description="User's postal code")
+
+@app.put("/home/{user_id}")
+async def update_user_info(user_id: int, user_data: UpdateUserRequest):
+    """
+    update user's email, telephone, and code postale.
+    """
+    # Check if the user exists
+    check_query = """
+    SELECT *
+    FROM membre
+    WHERE id_membre = :user_id
+    """
+    params = {"user_id": user_id}
+    existing_user = await database.fetch_one(check_query, values=params)
+
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # adding the fields if provided
+    update_fields = []
+    update_values = {"user_id": user_id}
+
+    if user_data.email is not None:
+        update_fields.append("mail = :email")
+        update_values["email"] = user_data.email
+    if user_data.tel is not None:
+        update_fields.append("telephone = :tel")
+        update_values["tel"] = user_data.tel
+    if user_data.code_postale is not None:
+        update_fields.append("code_postal = :code_postale")
+        update_values["code_postale"] = user_data.code_postale
+
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields provided for update")
+
+    update_query = f"""
+    UPDATE membre
+    SET {', '.join(update_fields)}
+    WHERE id_membre = :user_id
+    """
+
+    await database.execute(update_query, values=update_values)
+
+    return {"message": "User information updated successfully"}
+
